@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<title>Editar</title>
+
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<body>
+
+<div class="container mt-4">
+
+<h2>Editar Entrega</h2>
+
+<form method="post" action="/atualizar/{{id}}">
+
+<input class="form-control mb-2" name="cliente" value="{{entrega[0]}}">
+<input class="form-control mb-2" name="bairro" value="{{entrega[1]}}">
+<input class="form-control mb-2" name="motorista" value="{{entrega[2]}}">
+
+<select class="form-control mb-2" name="status">
+
+<option {% if entrega[3]=='Pendente' %}selected{% endif %}>Pendente</option>
+<option {% if entrega[3]=='Saiu para entrega' %}selected{% endif %}>Saiu para entrega</option>
+<option {% if entrega[3]=='Entregue' %}selected{% endif %}>Entregue</option>
+
+</select>
+
+<button class="btn btn-success">Salvar</button>
+
+<a href="/" class="btn btn-secondary">Voltar</a>
+
+</form>
+
+</div>
+
+</body>
+
+</html>
