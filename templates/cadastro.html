@@ -1,64 +1,53 @@
 <!DOCTYPE html>
 <html>
 
-<head>
-
-<title>Cadastro</title>
-
-<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-
-</head>
-
 <body>
-
-<div class="container mt-4">
 
 <h2>Nova Entrega</h2>
 
-<form method="post" action="/salvar">
+<form action="/salvar" method="post">
 
-<div class="mb-3">
+Nota Fiscal<br>
+<input type="text" name="nf"><br><br>
 
-<label>Cliente</label>
-<input type="text" name="cliente" class="form-control">
+Cliente<br>
+<input type="text" name="cliente"><br><br>
 
-</div>
+Endereço<br>
+<input type="text" name="endereco"><br><br>
 
-<div class="mb-3">
+Motorista<br>
 
-<label>Bairro</label>
-<input type="text" name="bairro" class="form-control">
+<select name="motorista">
 
-</div>
+{% for m in motoristas %}
 
-<div class="mb-3">
+<option>{{m}}</option>
 
-<label>Motorista</label>
-<input type="text" name="motorista" class="form-control">
-
-</div>
-
-<div class="mb-3">
-
-<label>Status</label>
-
-<select name="status" class="form-control">
-
-<option>Pendente</option>
-<option>Saiu para entrega</option>
-<option>Entregue</option>
+{% endfor %}
 
 </select>
 
-</div>
+<br><br>
 
-<button class="btn btn-success">Salvar</button>
+Status<br>
 
-<a href="/" class="btn btn-secondary">Voltar</a>
+<select name="status">
+
+<option>Pendente</option>
+<option>Saiu para entrega</option>
+
+</select>
+
+<br><br>
+
+<button type="submit">Salvar</button>
 
 </form>
 
-</div>
+<br>
+
+<a href="/">Voltar</a>
 
 </body>
 

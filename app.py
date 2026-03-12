@@ -1,11 +1,19 @@
+from flask import Flask, render_template, request, redirect
 import csv
 import pandas as pd
 from datetime import datetime
-from flask import Flask, render_template, request, redirect, send_file
 
 app = Flask(__name__)
 
 arquivo = "entregas.csv"
+
+motoristas = [
+    "José Marcos",
+    "Paulo Cesar",
+    "Silvio",
+    "Deivid",
+    "David"
+]
 
 
 def ler_entregas():
@@ -19,45 +27,20 @@ def ler_entregas():
 
             for i, linha in enumerate(reader):
 
-                if len(linha) < 5:
-                    continue
-
                 entregas.append({
                     "id": i,
-                    "cliente": linha[0],
-                    "bairro": linha[1],
-                    "motorista": linha[2],
-                    "status": linha[3],
-                    "data": linha[4]
+                    "nf": linha[0],
+                    "cliente": linha[1],
+                    "endereco": linha[2],
+                    "motorista": linha[3],
+                    "status": linha[4],
+                    "data": linha[5]
                 })
 
-    except FileNotFoundError:
+    except:
         pass
 
     return entregas
-
-
-def ler_motoristas():
-
-    motoristas = []
-
-    try:
-
-        with open("motoristas.csv", "r", encoding="utf-8") as file:
-
-            reader = csv.reader(file)
-
-            for linha in reader:
-
-                motoristas.append({
-                    "nome": linha[0],
-                    "veiculo": linha[1]
-                })
-
-    except FileNotFoundError:
-        pass
-
-    return motoristas
 
 
 @app.route("/")
@@ -66,21 +49,26 @@ def dashboard():
     entregas = ler_entregas()
 
     total = len(entregas)
+    pendente = 0
+    saiu = 0
+    entregue = 0
 
-    pendente = sum(1 for e in entregas if e["status"] == "Pendente")
-    saiu = sum(1 for e in entregas if e["status"] == "Saiu para entrega")
-    entregue = sum(1 for e in entregas if e["status"] == "Entregue")
+    desempenho = {}
 
-    motoristas = {}
+    for m in motoristas:
+        desempenho[m] = 0
 
     for e in entregas:
 
-        nome = e["motorista"]
+        if e["status"] == "Pendente":
+            pendente += 1
 
-        motoristas[nome] = motoristas.get(nome, 0) + 1
+        elif e["status"] == "Saiu para entrega":
+            saiu += 1
 
-    nomes = list(motoristas.keys())
-    quantidades = list(motoristas.values())
+        elif e["status"] == "Entregue":
+            entregue += 1
+            desempenho[e["motorista"]] += 1
 
     return render_template(
         "dashboard.html",
@@ -89,21 +77,25 @@ def dashboard():
         pendente=pendente,
         saiu=saiu,
         entregue=entregue,
-        nomes=nomes,
-        quantidades=quantidades
+        desempenho=desempenho
     )
 
 
 @app.route("/cadastro")
 def cadastro():
-    return render_template("cadastro.html")
+
+    return render_template(
+        "cadastro.html",
+        motoristas=motoristas
+    )
 
 
 @app.route("/salvar", methods=["POST"])
 def salvar():
 
+    nf = request.form["nf"]
     cliente = request.form["cliente"]
-    bairro = request.form["bairro"]
+    endereco = request.form["endereco"]
     motorista = request.form["motorista"]
     status = request.form["status"]
 
@@ -112,55 +104,32 @@ def salvar():
     with open(arquivo, "a", newline="", encoding="utf-8") as file:
 
         writer = csv.writer(file)
-
-        writer.writerow([cliente, bairro, motorista, status, data])
+        writer.writerow([nf, cliente, endereco, motorista, status, data])
 
     return redirect("/")
 
 
-@app.route("/editar/<int:id>")
-def editar(id):
+@app.route("/importar", methods=["POST"])
+def importar():
 
-    with open(arquivo, "r", encoding="utf-8") as file:
+    file = request.files["arquivo"]
 
-        reader = csv.reader(file)
+    df = pd.read_excel(file)
 
-        linhas = list(reader)
+    with open(arquivo, "a", newline="", encoding="utf-8") as f:
 
-    entrega = linhas[id]
+        writer = csv.writer(f)
 
-    return render_template("editar.html", entrega=entrega, id=id)
+        for _, row in df.iterrows():
 
-
-@app.route("/atualizar/<int:id>", methods=["POST"])
-def atualizar(id):
-
-    linhas = []
-
-    with open(arquivo, "r", encoding="utf-8") as file:
-
-        reader = csv.reader(file)
-
-        for i, linha in enumerate(reader):
-
-            if i == id:
-
-                cliente = request.form["cliente"]
-                bairro = request.form["bairro"]
-                motorista = request.form["motorista"]
-                status = request.form["status"]
-
-                data = linha[4]
-
-                linha = [cliente, bairro, motorista, status, data]
-
-            linhas.append(linha)
-
-    with open(arquivo, "w", newline="", encoding="utf-8") as file:
-
-        writer = csv.writer(file)
-
-        writer.writerows(linhas)
+            writer.writerow([
+                row["NF"],
+                row["Cliente"],
+                row["Endereco"],
+                row["Motorista"],
+                row["Status"],
+                datetime.now().strftime("%d/%m/%Y")
+            ])
 
     return redirect("/")
 
@@ -178,18 +147,17 @@ def atualizar_status(id):
 
             if i == id:
 
-                if linha[3] == "Pendente":
-                    linha[3] = "Saiu para entrega"
+                if linha[4] == "Pendente":
+                    linha[4] = "Saiu para entrega"
 
-                elif linha[3] == "Saiu para entrega":
-                    linha[3] = "Entregue"
+                elif linha[4] == "Saiu para entrega":
+                    linha[4] = "Entregue"
 
             linhas.append(linha)
 
     with open(arquivo, "w", newline="", encoding="utf-8") as file:
 
         writer = csv.writer(file)
-
         writer.writerows(linhas)
 
     return redirect("/")
@@ -212,20 +180,9 @@ def excluir(id):
     with open(arquivo, "w", newline="", encoding="utf-8") as file:
 
         writer = csv.writer(file)
-
         writer.writerows(linhas)
 
     return redirect("/")
-
-
-@app.route("/motorista")
-def tela_motorista():
-
-    entregas = ler_entregas()
-
-    entregas_pendentes = [e for e in entregas if e["status"] != "Entregue"]
-
-    return render_template("motorista.html", entregas=entregas_pendentes)
 
 
 @app.route("/rotas")
@@ -235,33 +192,18 @@ def rotas():
 
     rotas = {}
 
+    for m in motoristas:
+        rotas[m] = []
+
     for e in entregas:
 
-        bairro = e["bairro"]
+        if e["status"] != "Entregue":
+            rotas[e["motorista"]].append(e)
 
-        rotas[bairro] = rotas.get(bairro, 0) + 1
-
-    return render_template("rotas.html", rotas=rotas)
-
-
-@app.route("/exportar")
-def exportar():
-
-    df = pd.read_csv("entregas.csv")
-
-    df.columns = [
-        "Cliente",
-        "Bairro",
-        "Motorista",
-        "Status",
-        "Data"
-    ]
-
-    arquivo_excel = "relatorio_entregas.xlsx"
-
-    df.to_excel(arquivo_excel, index=False)
-
-    return send_file(arquivo_excel, as_attachment=True)
+    return render_template(
+        "rotas.html",
+        rotas=rotas
+    )
 
 
 if __name__ == "__main__":
