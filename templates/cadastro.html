@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html>
 
-<body>
+<body class="container">
 
 <h2>Nova Entrega</h2>
 
 <form action="/salvar" method="post">
 
-Nota Fiscal<br>
-<input type="text" name="nf"><br><br>
+<label>Nota Fiscal</label>
+<input class="form-control" name="nf">
 
-Cliente<br>
-<input type="text" name="cliente"><br><br>
+<label>Cliente</label>
+<input class="form-control" name="cliente">
 
-Endereço<br>
-<input type="text" name="endereco"><br><br>
+<label>Endereço</label>
+<input class="form-control" name="endereco">
 
-Motorista<br>
+<label>Motorista</label>
 
-<select name="motorista">
+<select class="form-control" name="motorista">
 
 {% for m in motoristas %}
 
@@ -28,20 +28,18 @@ Motorista<br>
 
 </select>
 
-<br><br>
+<label>Status</label>
 
-Status<br>
-
-<select name="status">
+<select class="form-control" name="status">
 
 <option>Pendente</option>
 <option>Saiu para entrega</option>
 
 </select>
 
-<br><br>
+<br>
 
-<button type="submit">Salvar</button>
+<button class="btn btn-success">Salvar</button>
 
 </form>
 

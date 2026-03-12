@@ -3,27 +3,77 @@
 
 <head>
 
-<title>Dashboard</title>
+<title>Painel Logístico</title>
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 </head>
 
-<body>
+<body class="container">
 
-<h1>Sistema de Entregas</h1>
+<h1 class="mt-4">Painel Logístico</h1>
 
-<a href="/cadastro">Cadastrar entrega</a> |
-<a href="/rotas">Ver rotas</a>
+<a href="/cadastro" class="btn btn-primary">Nova Entrega</a>
 
 <hr>
 
-<h2>Status das entregas</h2>
+<div class="row">
 
-Total: {{total}}<br>
-Pendentes: {{pendente}}<br>
-Saiu para entrega: {{saiu}}<br>
-Entregues: {{entregue}}
+<div class="col">
+
+<div class="card p-3">
+
+<h5>Total</h5>
+
+<h3>{{total}}</h3>
+
+</div>
+
+</div>
+
+<div class="col">
+
+<div class="card p-3">
+
+<h5>Pendentes</h5>
+
+<h3>{{pendente}}</h3>
+
+</div>
+
+</div>
+
+<div class="col">
+
+<div class="card p-3">
+
+<h5>Em rota</h5>
+
+<h3>{{saiu}}</h3>
+
+</div>
+
+</div>
+
+<div class="col">
+
+<div class="card p-3">
+
+<h5>Entregues</h5>
+
+<h3>{{entregue}}</h3>
+
+</div>
+
+</div>
+
+</div>
+
+<hr>
+
+<h3>Gráfico de entregas</h3>
 
 <canvas id="grafico"></canvas>
 
@@ -33,11 +83,11 @@ const ctx = document.getElementById('grafico');
 
 new Chart(ctx, {
 
-type: 'pie',
+type: 'doughnut',
 
 data: {
 
-labels: ['Pendentes','Saiu para entrega','Entregues'],
+labels: ['Pendentes','Saiu','Entregues'],
 
 datasets: [{
 data: [{{pendente}},{{saiu}},{{entregue}}]
@@ -51,16 +101,16 @@ data: [{{pendente}},{{saiu}},{{entregue}}]
 
 <hr>
 
-<h2>Desempenho dos motoristas</h2>
+<h3>Ranking de motoristas</h3>
 
-<table border="1">
+<table class="table">
 
 <tr>
 <th>Motorista</th>
-<th>Entregas concluídas</th>
+<th>Entregas</th>
 </tr>
 
-{% for m,q in desempenho.items() %}
+{% for m,q in ranking.items() %}
 
 <tr>
 
@@ -75,21 +125,9 @@ data: [{{pendente}},{{saiu}},{{entregue}}]
 
 <hr>
 
-<h2>Importar planilha Excel</h2>
+<h3>Entregas</h3>
 
-<form action="/importar" method="post" enctype="multipart/form-data">
-
-<input type="file" name="arquivo">
-
-<button type="submit">Importar</button>
-
-</form>
-
-<hr>
-
-<h2>Lista de entregas</h2>
-
-<table border="1">
+<table class="table table-striped">
 
 <tr>
 <th>NF</th>
@@ -97,7 +135,6 @@ data: [{{pendente}},{{saiu}},{{entregue}}]
 <th>Endereço</th>
 <th>Motorista</th>
 <th>Status</th>
-<th>Data</th>
 <th>Mapa</th>
 <th>Ações</th>
 </tr>
@@ -111,13 +148,13 @@ data: [{{pendente}},{{saiu}},{{entregue}}]
 <td>{{e.endereco}}</td>
 <td>{{e.motorista}}</td>
 <td>{{e.status}}</td>
-<td>{{e.data}}</td>
 
 <td>
 
-<a href="https://www.google.com/maps/search/{{e.endereco}}" target="_blank">
+<a target="_blank"
+href="https://www.google.com/maps/search/{{e.endereco}}">
 
-Ver rota
+Mapa
 
 </a>
 
