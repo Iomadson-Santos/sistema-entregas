@@ -10,7 +10,6 @@ app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 db = SQLAlchemy(app)
 
 
-# MODELO DA TABELA
 class Entrega(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
@@ -22,7 +21,6 @@ class Entrega(db.Model):
     data = db.Column(db.String(20))
 
 
-# CRIAR TABELAS AUTOMATICAMENTE
 with app.app_context():
     db.create_all()
 
@@ -39,7 +37,12 @@ MOTORISTAS = [
 @app.route("/")
 def dashboard():
 
-    entregas = Entrega.query.all()
+    data_filtro = request.args.get("data")
+
+    if data_filtro:
+        entregas = Entrega.query.filter_by(data=data_filtro).all()
+    else:
+        entregas = Entrega.query.all()
 
     total = len(entregas)
     pendente = 0
@@ -91,7 +94,7 @@ def salvar():
     motorista = request.form["motorista"]
     status = request.form["status"]
 
-    data = datetime.now().strftime("%d/%m/%Y")
+    data = datetime.now().strftime("%Y-%m-%d")
 
     nova = Entrega(
         nf=nf,

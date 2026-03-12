@@ -1,79 +1,41 @@
 <!DOCTYPE html>
 <html>
-
 <head>
 
-<title>Painel Logístico</title>
-
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+<title>Sistema de Entregas</title>
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
+<link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+
+<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
 </head>
 
-<body class="container">
+<body>
 
-<h1 class="mt-4">Painel Logístico</h1>
+<h1>Dashboard de Entregas</h1>
 
-<a href="/cadastro" class="btn btn-primary">Nova Entrega</a>
+<a href="/cadastro">Nova Entrega</a>
 
-<hr>
+<h2>Indicadores</h2>
 
-<div class="row">
+<p>Total: {{total}}</p>
+<p>Pendentes: {{pendente}}</p>
+<p>Saiu para entrega: {{saiu}}</p>
+<p>Entregues: {{entregue}}</p>
 
-<div class="col">
+<h2>Filtrar por Data</h2>
 
-<div class="card p-3">
+<form method="GET">
 
-<h5>Total</h5>
+<input type="date" name="data">
 
-<h3>{{total}}</h3>
+<button type="submit">Filtrar</button>
 
-</div>
+</form>
 
-</div>
-
-<div class="col">
-
-<div class="card p-3">
-
-<h5>Pendentes</h5>
-
-<h3>{{pendente}}</h3>
-
-</div>
-
-</div>
-
-<div class="col">
-
-<div class="card p-3">
-
-<h5>Em rota</h5>
-
-<h3>{{saiu}}</h3>
-
-</div>
-
-</div>
-
-<div class="col">
-
-<div class="card p-3">
-
-<h5>Entregues</h5>
-
-<h3>{{entregue}}</h3>
-
-</div>
-
-</div>
-
-</div>
-
-<hr>
-
-<h3>Gráfico de entregas</h3>
+<h2>Gráfico de Entregas</h2>
 
 <canvas id="grafico"></canvas>
 
@@ -83,15 +45,27 @@ const ctx = document.getElementById('grafico');
 
 new Chart(ctx, {
 
-type: 'doughnut',
+type: 'bar',
 
 data: {
 
-labels: ['Pendentes','Saiu','Entregues'],
+labels: ['Pendentes','Saiu para entrega','Entregues'],
 
 datasets: [{
-data: [{{pendente}},{{saiu}},{{entregue}}]
+
+label: 'Status',
+
+data: [{{pendente}},{{saiu}},{{entregue}}],
+
+borderWidth: 1
+
 }]
+
+},
+
+options: {
+
+responsive:true
 
 }
 
@@ -99,44 +73,55 @@ data: [{{pendente}},{{saiu}},{{entregue}}]
 
 </script>
 
-<hr>
 
-<h3>Ranking de motoristas</h3>
+<h2>Mapa de Entregas</h2>
 
-<table class="table">
+<div id="mapa" style="height:400px;"></div>
 
-<tr>
-<th>Motorista</th>
-<th>Entregas</th>
-</tr>
+<script>
 
-{% for m,q in ranking.items() %}
+var map = L.map('mapa').setView([-23.55,-46.63],11);
 
-<tr>
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
 
-<td>{{m}}</td>
-<td>{{q}}</td>
+{% for e in entregas %}
 
-</tr>
+L.marker([-23.55,-46.63])
+.addTo(map)
+.bindPopup("{{e.cliente}}<br>{{e.endereco}}");
 
 {% endfor %}
 
-</table>
+</script>
 
-<hr>
 
-<h3>Entregas</h3>
+<h2>Ranking de Motoristas</h2>
 
-<table class="table table-striped">
+<ul>
+
+{% for m,q in ranking.items() %}
+
+<li>{{m}} — {{q}} entregas</li>
+
+{% endfor %}
+
+</ul>
+
+
+<h2>Lista de Entregas</h2>
+
+<table border="1">
 
 <tr>
+
 <th>NF</th>
 <th>Cliente</th>
 <th>Endereço</th>
 <th>Motorista</th>
 <th>Status</th>
-<th>Mapa</th>
+<th>Data</th>
 <th>Ações</th>
+
 </tr>
 
 {% for e in entregas %}
@@ -148,21 +133,12 @@ data: [{{pendente}},{{saiu}},{{entregue}}]
 <td>{{e.endereco}}</td>
 <td>{{e.motorista}}</td>
 <td>{{e.status}}</td>
+<td>{{e.data}}</td>
 
 <td>
 
-<a target="_blank"
-href="https://www.google.com/maps/search/{{e.endereco}}">
+<a href="/status/{{e.id}}">Atualizar</a>
 
-Mapa
-
-</a>
-
-</td>
-
-<td>
-
-<a href="/status/{{e.id}}">Atualizar</a> |
 <a href="/excluir/{{e.id}}">Excluir</a>
 
 </td>
@@ -174,5 +150,4 @@ Mapa
 </table>
 
 </body>
-
 </html>
