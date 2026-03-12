@@ -1,11 +1,25 @@
 from flask import Flask, render_template, request, redirect, url_for
-import csv
-import os
+from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 
 app = Flask(__name__)
 
-ARQUIVO = "entregas.csv"
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///entregas.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+
+db = SQLAlchemy(app)
+
+
+class Entrega(db.Model):
+
+    id = db.Column(db.Integer, primary_key=True)
+    nf = db.Column(db.String(50))
+    cliente = db.Column(db.String(200))
+    endereco = db.Column(db.String(300))
+    motorista = db.Column(db.String(100))
+    status = db.Column(db.String(50))
+    data = db.Column(db.String(20))
+
 
 MOTORISTAS = [
     "José Marcos",
@@ -16,47 +30,10 @@ MOTORISTAS = [
 ]
 
 
-def ler_entregas():
-
-    entregas = []
-
-    if not os.path.exists(ARQUIVO):
-        return entregas
-
-    with open(ARQUIVO, "r", encoding="utf-8") as file:
-
-        reader = csv.reader(file)
-
-        for i, linha in enumerate(reader):
-
-            if len(linha) < 6:
-                continue
-
-            entregas.append({
-                "id": i,
-                "nf": linha[0],
-                "cliente": linha[1],
-                "endereco": linha[2],
-                "motorista": linha[3],
-                "status": linha[4],
-                "data": linha[5]
-            })
-
-    return entregas
-
-
-def salvar_csv(linhas):
-
-    with open(ARQUIVO, "w", newline="", encoding="utf-8") as file:
-
-        writer = csv.writer(file)
-        writer.writerows(linhas)
-
-
 @app.route("/")
 def dashboard():
 
-    entregas = ler_entregas()
+    entregas = Entrega.query.all()
 
     total = len(entregas)
     pendente = 0
@@ -67,17 +44,15 @@ def dashboard():
 
     for e in entregas:
 
-        status = e["status"]
-
-        if status == "Pendente":
+        if e.status == "Pendente":
             pendente += 1
 
-        elif status == "Saiu para entrega":
+        elif e.status == "Saiu para entrega":
             saiu += 1
 
-        elif status == "Entregue":
+        elif e.status == "Entregue":
             entregue += 1
-            ranking[e["motorista"]] += 1
+            ranking[e.motorista] += 1
 
     ranking = dict(sorted(ranking.items(), key=lambda x: x[1], reverse=True))
 
@@ -104,26 +79,25 @@ def cadastro():
 @app.route("/salvar", methods=["POST"])
 def salvar():
 
-    nf = request.form.get("nf")
-    cliente = request.form.get("cliente")
-    endereco = request.form.get("endereco")
-    motorista = request.form.get("motorista")
-    status = request.form.get("status")
+    nf = request.form["nf"]
+    cliente = request.form["cliente"]
+    endereco = request.form["endereco"]
+    motorista = request.form["motorista"]
+    status = request.form["status"]
 
     data = datetime.now().strftime("%d/%m/%Y")
 
-    with open(ARQUIVO, "a", newline="", encoding="utf-8") as file:
+    nova = Entrega(
+        nf=nf,
+        cliente=cliente,
+        endereco=endereco,
+        motorista=motorista,
+        status=status,
+        data=data
+    )
 
-        writer = csv.writer(file)
-
-        writer.writerow([
-            nf,
-            cliente,
-            endereco,
-            motorista,
-            status,
-            data
-        ])
+    db.session.add(nova)
+    db.session.commit()
 
     return redirect(url_for("dashboard"))
 
@@ -131,25 +105,15 @@ def salvar():
 @app.route("/status/<int:id>")
 def atualizar_status(id):
 
-    linhas = []
+    entrega = Entrega.query.get(id)
 
-    with open(ARQUIVO, "r", encoding="utf-8") as file:
+    if entrega.status == "Pendente":
+        entrega.status = "Saiu para entrega"
 
-        reader = csv.reader(file)
+    elif entrega.status == "Saiu para entrega":
+        entrega.status = "Entregue"
 
-        for i, linha in enumerate(reader):
-
-            if i == id:
-
-                if linha[4] == "Pendente":
-                    linha[4] = "Saiu para entrega"
-
-                elif linha[4] == "Saiu para entrega":
-                    linha[4] = "Entregue"
-
-            linhas.append(linha)
-
-    salvar_csv(linhas)
+    db.session.commit()
 
     return redirect(url_for("dashboard"))
 
@@ -157,21 +121,16 @@ def atualizar_status(id):
 @app.route("/excluir/<int:id>")
 def excluir(id):
 
-    linhas = []
+    entrega = Entrega.query.get(id)
 
-    with open(ARQUIVO, "r", encoding="utf-8") as file:
-
-        reader = csv.reader(file)
-
-        for i, linha in enumerate(reader):
-
-            if i != id:
-                linhas.append(linha)
-
-    salvar_csv(linhas)
+    db.session.delete(entrega)
+    db.session.commit()
 
     return redirect(url_for("dashboard"))
 
 
 if __name__ == "__main__":
+    with app.app_context():
+        db.create_all()
+
     app.run(debug=True)
