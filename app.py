@@ -4,12 +4,18 @@ from datetime import datetime
 
 app = Flask(__name__)
 
+# Configuração do banco SQLite
 app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///entregas.db"
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 
 db = SQLAlchemy(app)
 
+# Criar tabela automaticamente no servidor
+with app.app_context():
+    db.create_all()
 
+
+# Modelo da tabela
 class Entrega(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
@@ -21,6 +27,7 @@ class Entrega(db.Model):
     data = db.Column(db.String(20))
 
 
+# Motoristas disponíveis
 MOTORISTAS = [
     "José Marcos",
     "Paulo Cesar",
@@ -30,6 +37,7 @@ MOTORISTAS = [
 ]
 
 
+# DASHBOARD
 @app.route("/")
 def dashboard():
 
@@ -67,6 +75,7 @@ def dashboard():
     )
 
 
+# TELA DE CADASTRO
 @app.route("/cadastro")
 def cadastro():
 
@@ -76,6 +85,7 @@ def cadastro():
     )
 
 
+# SALVAR ENTREGA
 @app.route("/salvar", methods=["POST"])
 def salvar():
 
@@ -102,6 +112,7 @@ def salvar():
     return redirect(url_for("dashboard"))
 
 
+# ATUALIZAR STATUS
 @app.route("/status/<int:id>")
 def atualizar_status(id):
 
@@ -118,6 +129,7 @@ def atualizar_status(id):
     return redirect(url_for("dashboard"))
 
 
+# EXCLUIR ENTREGA
 @app.route("/excluir/<int:id>")
 def excluir(id):
 
@@ -129,8 +141,6 @@ def excluir(id):
     return redirect(url_for("dashboard"))
 
 
+# RODAR LOCAL
 if __name__ == "__main__":
-    with app.app_context():
-        db.create_all()
-
     app.run(debug=True)
