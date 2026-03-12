@@ -1,44 +1,17 @@
-<!DOCTYPE html>
-<html>
+<h2>Rotas por motorista</h2>
 
-<body>
+{% for motorista, lista in rotas.items() %}
 
-<h1>Roteirização de entregas</h1>
+<h3>{{motorista}}</h3>
 
-<a href="/">Voltar</a>
-
-<hr>
-
-{% for motorista,lista in rotas.items() %}
-
-<h2>{{motorista}}</h2>
-
-<table border="1">
-
-<tr>
-<th>NF</th>
-<th>Cliente</th>
-<th>Endereço</th>
-<th>Status</th>
-</tr>
+<ul>
 
 {% for e in lista %}
 
-<tr>
-
-<td>{{e.nf}}</td>
-<td>{{e.cliente}}</td>
-<td>{{e.endereco}}</td>
-<td>{{e.status}}</td>
-
-</tr>
+<li>{{e.cliente}} - {{e.endereco}}</li>
 
 {% endfor %}
 
-</table>
+</ul>
 
 {% endfor %}
-
-</body>
-
-</html>

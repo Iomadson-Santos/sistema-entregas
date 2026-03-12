@@ -21,10 +21,6 @@ class Entrega(db.Model):
     data = db.Column(db.String(20))
 
 
-with app.app_context():
-    db.create_all()
-
-
 MOTORISTAS = [
     "José Marcos",
     "Paulo Cesar",
@@ -34,22 +30,21 @@ MOTORISTAS = [
 ]
 
 
+with app.app_context():
+    db.create_all()
+
+
 @app.route("/")
 def dashboard():
 
-    data_filtro = request.args.get("data")
-
-    if data_filtro:
-        entregas = Entrega.query.filter_by(data=data_filtro).all()
-    else:
-        entregas = Entrega.query.all()
+    entregas = Entrega.query.all()
 
     total = len(entregas)
     pendente = 0
     saiu = 0
     entregue = 0
 
-    ranking = {m: 0 for m in MOTORISTAS}
+    ranking = {m:0 for m in MOTORISTAS}
 
     for e in entregas:
 
@@ -62,8 +57,6 @@ def dashboard():
         elif e.status == "Entregue":
             entregue += 1
             ranking[e.motorista] += 1
-
-    ranking = dict(sorted(ranking.items(), key=lambda x: x[1], reverse=True))
 
     return render_template(
         "dashboard.html",
@@ -125,6 +118,31 @@ def atualizar_status(id):
     db.session.commit()
 
     return redirect(url_for("dashboard"))
+
+
+@app.route("/rotas")
+def rotas():
+
+    entregas = Entrega.query.filter(Entrega.status != "Entregue").all()
+
+    rotas = {}
+
+    for e in entregas:
+        rotas.setdefault(e.motorista, []).append(e)
+
+    return render_template("rotas.html", rotas=rotas)
+
+
+@app.route("/motorista/<nome>")
+def motorista(nome):
+
+    entregas = Entrega.query.filter_by(motorista=nome).all()
+
+    return render_template(
+        "motorista.html",
+        entregas=entregas,
+        motorista=nome
+    )
 
 
 @app.route("/excluir/<int:id>")
