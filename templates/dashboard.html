@@ -1,7 +1,9 @@
 <!DOCTYPE html>
-<html>
+<html lang="pt-br">
 
 <head>
+
+<meta charset="UTF-8">
 
 <title>Sistema de Entregas</title>
 
@@ -15,47 +17,55 @@
 
 </head>
 
+
 <body class="bg-light">
 
 <div class="container mt-4">
 
 <h1 class="mb-4">🚚 Sistema de Entregas</h1>
 
-<a href="/cadastro" class="btn btn-primary mb-3">Nova entrega</a>
+<div class="mb-3">
 
-<div class="row text-center">
+<a href="/cadastro" class="btn btn-success">Nova Entrega</a>
 
-<div class="col">
+<a href="/rotas" class="btn btn-dark">Rotas</a>
+
+</div>
+
+
+<div class="row text-center mb-4">
+
+<div class="col-md-3">
 <div class="card shadow">
 <div class="card-body">
-<h5>Total</h5>
+<h6>Total</h6>
 <h2>{{total}}</h2>
 </div>
 </div>
 </div>
 
-<div class="col">
+<div class="col-md-3">
 <div class="card shadow">
 <div class="card-body">
-<h5>Pendentes</h5>
+<h6>Pendentes</h6>
 <h2 class="text-warning">{{pendente}}</h2>
 </div>
 </div>
 </div>
 
-<div class="col">
+<div class="col-md-3">
 <div class="card shadow">
 <div class="card-body">
-<h5>Em rota</h5>
+<h6>Em rota</h6>
 <h2 class="text-primary">{{saiu}}</h2>
 </div>
 </div>
 </div>
 
-<div class="col">
+<div class="col-md-3">
 <div class="card shadow">
 <div class="card-body">
-<h5>Entregues</h5>
+<h6>Entregues</h6>
 <h2 class="text-success">{{entregue}}</h2>
 </div>
 </div>
@@ -63,11 +73,23 @@
 
 </div>
 
-<hr>
 
-<h4>Ranking de motoristas</h4>
+<div class="row">
 
-<ul class="list-group mb-4">
+<div class="col-md-6">
+
+<h4>Status das Entregas</h4>
+
+<canvas id="grafico"></canvas>
+
+</div>
+
+
+<div class="col-md-6">
+
+<h4>Ranking Motoristas</h4>
+
+<ul class="list-group">
 
 {% for m,q in ranking.items() %}
 
@@ -83,63 +105,27 @@
 
 </ul>
 
-<h4>Gráfico de entregas</h4>
+</div>
 
-<canvas id="grafico"></canvas>
+</div>
 
-<script>
-
-const ctx = document.getElementById("grafico")
-
-new Chart(ctx,{
-
-type:"bar",
-
-data:{
-
-labels:["Pendentes","Em rota","Entregues"],
-
-datasets:[{
-
-label:"Entregas",
-
-data:[{{pendente}},{{saiu}},{{entregue}}]
-
-}]
-
-}
-
-})
-
-</script>
 
 <hr>
 
-<h4>Mapa de entregas</h4>
 
-<div id="mapa" style="height:400px;"></div>
+<h4>Mapa das Entregas</h4>
 
-<script>
+<div id="mapa" style="height:400px;" class="mb-4"></div>
 
-var map = L.map('mapa').setView([-23.55,-46.63],11)
-
-L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
-
-{% for e in entregas %}
-
-L.marker([-23.55,-46.63])
-.addTo(map)
-.bindPopup("{{e.cliente}} <br> {{e.endereco}}")
-
-{% endfor %}
-
-</script>
 
 <hr>
 
-<h4>Lista de entregas</h4>
 
-<table class="table table-striped">
+<h4>Lista de Entregas</h4>
+
+<table class="table table-striped table-hover">
+
+<thead class="table-dark">
 
 <tr>
 
@@ -149,24 +135,49 @@ L.marker([-23.55,-46.63])
 <th>Motorista</th>
 <th>Status</th>
 <th>Data</th>
-<th></th>
+<th>Ações</th>
 
 </tr>
+
+</thead>
+
+<tbody>
 
 {% for e in entregas %}
 
 <tr>
 
 <td>{{e.nf}}</td>
+
 <td>{{e.cliente}}</td>
+
 <td>{{e.endereco}}</td>
+
 <td>{{e.motorista}}</td>
-<td>{{e.status}}</td>
+
+<td>
+
+{% if e.status == "Entregue" %}
+
+<span class="badge bg-success">Entregue</span>
+
+{% elif e.status == "Saiu para entrega" %}
+
+<span class="badge bg-primary">Em rota</span>
+
+{% else %}
+
+<span class="badge bg-warning">Pendente</span>
+
+{% endif %}
+
+</td>
+
 <td>{{e.data}}</td>
 
 <td>
 
-<a href="/status/{{e.id}}" class="btn btn-sm btn-warning">Status</a>
+<a href="/status/{{e.id}}" class="btn btn-sm btn-warning">Atualizar</a>
 
 <a href="/excluir/{{e.id}}" class="btn btn-sm btn-danger">Excluir</a>
 
@@ -176,9 +187,68 @@ L.marker([-23.55,-46.63])
 
 {% endfor %}
 
+</tbody>
+
 </table>
 
 </div>
+
+
+<script>
+
+const ctx = document.getElementById('grafico')
+
+new Chart(ctx,{
+
+type:'bar',
+
+data:{
+
+labels:['Pendentes','Em rota','Entregues'],
+
+datasets:[{
+
+label:'Entregas',
+
+data:[{{pendente}},{{saiu}},{{entregue}}],
+
+backgroundColor:[
+'#ffc107',
+'#0d6efd',
+'#198754'
+]
+
+}]
+
+}
+
+})
+
+</script>
+
+
+<script>
+
+var map = L.map('mapa').setView([-23.55,-46.63],11)
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map)
+
+{% for e in entregas %}
+
+{% if e.latitude %}
+
+L.marker([{{e.latitude}},{{e.longitude}}])
+
+.addTo(map)
+
+.bindPopup("<b>{{e.cliente}}</b><br>{{e.endereco}}<br>{{e.status}}")
+
+{% endif %}
+
+{% endfor %}
+
+</script>
+
 
 </body>
 </html>
